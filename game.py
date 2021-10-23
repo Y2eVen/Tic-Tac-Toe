@@ -37,8 +37,12 @@ class Game:
         self.end_text = ''
         self.game_over = False
         self.hid = False
-
+    
         self.squares = 3
+        
+        # self.board = [['X', '_', 'X'],
+        #             ['X', 'O', 'O'],
+        #             ['X', 'O', 'O']]
 
         self.board = [['_' for i in range(self.squares)]
                       for j in range(self.squares)]
@@ -121,7 +125,7 @@ class Game:
                     return True
         return False
 
-    def winnable(self):
+    def evaluate(self, depth=0):
 
         b = self.board
         l = len(b)
@@ -130,64 +134,73 @@ class Game:
             r = b[row]
             if all(e == r[0] for e in r):
                 if r[0] == 'X':
-                    return 10
+                    return 10 - depth
                 elif r[0] == 'O':
-                    return -10
+                    return depth - 10
 
         for col in range(l):
             c = [row[col] for row in b]
             if all(e == c[0] for e in c):
                 if c[0] == 'X':
-                    return 10
+                    return 10 - depth
                 elif c[0] == 'O':
-                    return -10
+                    return depth - 10
 
         diag = [b[d][d] for d in range(l)]
         if all(e == diag[0] for e in diag):
             if diag[0] == 'X':
-                return 10
+                return 10 - depth
             elif diag[0] == 'O':
-                return -10
+                return depth - 10
 
         anti = [b[-a-1][a] for a in range(l)]
         if all(e == anti[0] for e in anti):
             if anti[0] == 'X':
-                return 10
+                return 10 - depth
             elif anti[0] == 'O':
-                return -10
+                return depth - 10
         return 0
+    
 
-    def minimax(self, depth, isMax):
+    def minimax(self, alpha, beta, depth, isMax):
 
         b = self.board
         l = self.squares
 
-        score = self.winnable()
+        v = self.evaluate(depth)
 
-        if score != 0:
-            return score
+        if v != 0:
+            return v
 
         if not self.moveable():
             return 0
 
         if isMax:
-            best = float('-inf')
+            max_val = float('-inf')
             for i in range(l):
                 for j in range(l):
                     if b[i][j] == '_':
                         b[i][j] = 'X'
-                        best = max(best, self.minimax(depth + 1, not isMax))
+                        val = self.minimax(alpha, beta, depth + 1, not isMax)
+                        max_val = max(max_val, val)
                         b[i][j] = '_'
-            return best
+                        alpha = max(alpha, val)
+                        if beta <= alpha:
+                            return max_val
+            return max_val
         else:
-            best = float('inf')
+            min_val = float('inf')
             for i in range(l):
                 for j in range(l):
                     if b[i][j] == '_':
                         b[i][j] = 'O'
-                        best = min(best, self.minimax(depth + 1, not isMax))
+                        val = self.minimax(alpha, beta, depth + 1, not isMax)
+                        min_val = min(min_val, val)
                         b[i][j] = '_'
-            return best
+                        beta = min(beta, val)
+                        if beta <= alpha:
+                            return min_val
+            return min_val
 
     def ai_move(self):
 
@@ -203,7 +216,7 @@ class Game:
                 if b[i][j] == '_':
                     b[i][j] = 'O'
 
-                    m = self.minimax(0, True)
+                    m = self.minimax(float('-inf'), float('inf'), 0, True)
 
                     b[i][j] = '_'
 
@@ -211,6 +224,7 @@ class Game:
                         best = m
                         r = i
                         c = j
+        
         if r != -1 and c != -1:
             b[r][c] = 'O'
 
@@ -221,7 +235,7 @@ class Game:
             self.is_over()
 
     def is_over(self):
-        w = self.winnable()
+        w = self.evaluate()
         if w != 0:
             if w == 10:
                 self.end_text = 'X Win'
