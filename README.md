@@ -1,2 +1,2 @@
 # Tic-Tac-Toe
-Minimax Algorithm + Evaluation Function + Others = Tic-Tac-Toe AI
+Simple Tic-Tac-Toe game using Minimax algorithm and evaluation function.
